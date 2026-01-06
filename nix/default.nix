@@ -3,7 +3,7 @@
   stdenv,
   stdenvAdapters,
   wayland,
-  wlroots_0_19,
+  wlroots_0_20,
   hyprcursor,
   pango,
   cairo,
