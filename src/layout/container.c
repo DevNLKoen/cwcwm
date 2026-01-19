@@ -660,7 +660,7 @@ static void cwc_container_insert_toplevel_silence(struct cwc_container *c,
     _cwc_container_insert_toplevel(c, toplevel, false);
 }
 
-static void _destroy_container(struct cwc_container *container)
+static void cwc_container_fini(struct cwc_container *container)
 {
     lua_State *L = g_config_get_lua_State();
     cwc_object_emit_signal_simple("container::destroy", L, container);
@@ -722,7 +722,7 @@ void cwc_container_remove_toplevel(struct cwc_toplevel *toplevel)
     if (wl_list_length(&cont->toplevels))
         return;
 
-    _destroy_container(cont);
+    cwc_container_fini(cont);
 }
 
 void cwc_container_remove_toplevel_but_dont_destroy_container_when_empty(
@@ -1106,6 +1106,19 @@ void cwc_container_set_enabled(struct cwc_container *container, bool set)
                                   g_config_get_lua_State(),      \
                                   cwc_container_get_front_toplevel(container))
 
+static void all_toplevel_set_floating(struct cwc_toplevel *toplevel, void *data)
+{
+    bool set = data;
+
+    if (set) {
+        cwc_toplevel_set_tiled(toplevel, 0);
+        return;
+    }
+
+    cwc_toplevel_set_tiled(toplevel, WLR_EDGE_TOP | WLR_EDGE_BOTTOM
+                                         | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
+}
+
 void cwc_container_set_floating(struct cwc_container *container, bool set)
 {
     // don't change the floating state when maximize and fullscreen cuz the
@@ -1129,6 +1142,9 @@ void cwc_container_set_floating(struct cwc_container *container, bool set)
             bsp_insert_container(container, container->workspace);
         }
     }
+
+    cwc_container_for_each_toplevel(container, all_toplevel_set_floating,
+                                    (void *)set);
 
     transaction_schedule_tag(
         cwc_output_get_current_tag_info(container->output));
@@ -1317,8 +1333,8 @@ static void all_toplevel_set_size(struct cwc_toplevel *toplevel, void *data)
     int surf_h = box->height;
 
     /* this prevent unnecessary frame synchronization */
-    if (geom.width == surf_w && geom.height == surf_h
-        && !cwc_toplevel_is_x11(toplevel))
+    if (!cwc_toplevel_is_x11(toplevel) && geom.width == surf_w
+        && geom.height == surf_h)
         return;
 
     struct wlr_box clip = {
