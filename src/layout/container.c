@@ -1337,6 +1337,13 @@ static void all_toplevel_set_size(struct cwc_toplevel *toplevel, void *data)
         && geom.height == surf_h)
         return;
 
+    if (cwc_toplevel_is_floating(toplevel)) {
+        cwc_toplevel_set_tiled(toplevel, 0);
+    } else {
+        cwc_toplevel_set_tiled(toplevel, WLR_EDGE_TOP | WLR_EDGE_BOTTOM
+                                             | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
+    }
+
     struct wlr_box clip = {
         .x      = 0,
         .y      = 0,
@@ -1344,6 +1351,7 @@ static void all_toplevel_set_size(struct cwc_toplevel *toplevel, void *data)
         .height = surf_h,
     };
 
+    bool visible = cwc_toplevel_is_visible(toplevel);
     if (!cwc_toplevel_is_x11(toplevel)) {
         // when floating we respect the min width
         if (cwc_toplevel_is_floating(toplevel)) {
@@ -1356,11 +1364,14 @@ static void all_toplevel_set_size(struct cwc_toplevel *toplevel, void *data)
         clip.x = geom.x;
         clip.y = geom.y;
 
-        if (cwc_toplevel_is_visible(toplevel) && !toplevel->resize_serial)
+        if (visible && !toplevel->resize_serial)
             server.resize_count = MAX(1, server.resize_count + 1);
     }
 
-    toplevel->resize_serial = cwc_toplevel_set_size(toplevel, surf_w, surf_h);
+    uint32_t resize_serial = cwc_toplevel_set_size(toplevel, surf_w, surf_h);
+    if (visible)
+        toplevel->resize_serial = resize_serial;
+
     wlr_scene_subsurface_tree_set_clip(&toplevel->surf_tree->node, &clip);
     box->width  = surf_w;
     box->height = surf_h;
@@ -1587,6 +1598,7 @@ void cwc_container_move_to_tag(struct cwc_container *container, int workspace)
     transaction_schedule_tag(tag_info);
     transaction_schedule_tag(
         cwc_output_get_current_tag_info(container->output));
+    cwc_container_set_enabled(container, cwc_container_is_visible(container));
 
     lua_State *L = g_config_get_lua_State();
     cwc_object_emit_signal_simple("client::prop::workspace", L,
@@ -1606,6 +1618,7 @@ void cwc_container_set_tag(struct cwc_container *container, tag_bitfield_t tag)
     bool changed   = container->tag != tag;
     container->tag = tag;
     transaction_schedule_output(container->output);
+    cwc_container_set_enabled(container, cwc_container_is_visible(container));
 
     lua_State *L = g_config_get_lua_State();
     if (changed)
