@@ -2,6 +2,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+
+    wlroots-src = {
+      url = "github:swaywm/wlroots";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -21,6 +26,7 @@
       perSystem = {
         config,
         pkgs,
+        inputs,
         ...
       }: let
         inherit
@@ -32,13 +38,17 @@
           nativeBuildInputs = old.nativeBuildInputs ++ [];
           buildInputs = old.buildInputs ++ [];
         };
+        wlroots_0_20 = pkgs.wlroots.overrideAttrs (old: {
+          src = inputs.wlroots-src;
+          version = "0.20.0-git-${inputs.wlroots-src.shortRev or "dirty"}";
+        });
       in {
         packages.default = cwc;
         overlayAttrs = {
-          inherit (config.packages) cwc;
+          inherit (config.packages) cwc wlroots_0_20;
         };
         packages = {
-          inherit cwc;
+          inherit cwc wlroots_0_20;
         };
         devShells.default = cwc.overrideAttrs shellOverride;
         formatter = pkgs.alejandra;
