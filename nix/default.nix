@@ -78,7 +78,7 @@ in
     buildInputs =
       [
         wayland
-        wlroots_0_19
+        wlroots_0_20
         hyprcursor
         cairo
         libxkbcommon
