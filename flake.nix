@@ -36,7 +36,7 @@
         pkgs' = pkgs.extend (final: prev: {
           inherit wlroots_0_20;
         });
-        wlroots_0_20 = pkgs.wlroots_0_20.overrideAttrs (old: {
+        wlroots_0_20 = pkgs.wlroots_0_19.overrideAttrs (old: {
           src = inputs.wlroots-src;
           version = "0.20.0-git-${inputs.wlroots-src.shortRev or "dirty"}";
         });
