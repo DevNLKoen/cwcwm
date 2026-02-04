@@ -38,7 +38,7 @@
           nativeBuildInputs = old.nativeBuildInputs ++ [];
           buildInputs = old.buildInputs ++ [];
         };
-        wlroots_0_20 = pkgs.wlroots.overrideAttrs (old: {
+        wlroots_0_20 = pkgs.wlroots_0_20.overrideAttrs (old: {
           src = inputs.wlroots-src;
           version = "0.20.0-git-${inputs.wlroots-src.shortRev or "dirty"}";
         });
