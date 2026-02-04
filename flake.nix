@@ -33,6 +33,9 @@
           (pkgs)
           callPackage
           ;
+        pkgs = pkgs.extend (final: prev: {
+          inherit wlroots_0_20;
+        });
         cwc = callPackage ./nix/default.nix {};
         shellOverride = old: {
           nativeBuildInputs = old.nativeBuildInputs ++ [];
