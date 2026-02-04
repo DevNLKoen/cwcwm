@@ -26,7 +26,6 @@
       perSystem = {
         config,
         pkgs,
-        inputs,
         ...
       }: let
         inherit
