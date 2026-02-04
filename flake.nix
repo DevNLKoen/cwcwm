@@ -36,15 +36,15 @@
         pkgs' = pkgs.extend (final: prev: {
           inherit wlroots_0_20;
         });
-        cwc = callPackage ./nix/default.nix {};
-        shellOverride = old: {
-          nativeBuildInputs = old.nativeBuildInputs ++ [];
-          buildInputs = old.buildInputs ++ [];
-        };
         wlroots_0_20 = pkgs.wlroots_0_20.overrideAttrs (old: {
           src = inputs.wlroots-src;
           version = "0.20.0-git-${inputs.wlroots-src.shortRev or "dirty"}";
         });
+        cwc = callPackage ./nix/default.nix { inherit wlroots_0_20; };
+        shellOverride = old: {
+          nativeBuildInputs = old.nativeBuildInputs ++ [];
+          buildInputs = old.buildInputs ++ [];
+        };
       in {
         packages.default = cwc;
         overlayAttrs = {
